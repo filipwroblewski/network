@@ -1,0 +1,183 @@
+﻿1. konfiguracja sieci:
+	
+	ifconfig  eth0 192.168.0.1 netmask 255.255.255.0 up
+	ip route add 0/0 via 192.168.0.2
+	echo 1 >/proc/sys/net/ipv4/ip_forward
+	
+	na Rescue:
+		/etc/init.d/NetworkManager stop
+
+	route -n
+	
+	ustawienie NAT-a:
+		iptables -t nat -A POSTROUTING -o eth2 MASQUERADE
+	
+2. wyłączenie firewalla (basic):
+
+	vim /firewall
+	
+		#!/bin/bash
+		iptables -F
+		iptables -P INPUT ACCEPT
+		iptables -P OUTPUT ACCEPT
+		iptables -P FORWARD ACCEPT
+		
+	chmod +x /firewall
+	/firewall
+	
+	iptables -L
+
+3. backup:
+	
+	vim /backup
+	
+		#!/bin/bash
+		tar -czvf /etc.tgz /etc
+		tar -cvf /bin.tar /bin
+		scp -p /etc.tgz root@192.168.0.1:/backup
+		
+	chmod +x /backup
+	crontab -e
+
+		min | godz | dzień msc | miesiąc | dzień tyg | skrypt
+
+		nd-0,pn-1,wt-2...nd-7
+		1-5 = 1,2,3,4,5
+		
+4. logowanie kluczami:
+	
+	na pierwszej maszynie (lin1):
+		
+		cd
+		ssh-keygen -t dsa
+		cd .ssh
+		ls
+		scp -p id_dsa.pub root@192.168.0.1:
+		
+	na drugiej maszynie (sles):
+	
+		cd
+		mkdir .ssh
+		cat id_dsa.pub >> .ssh/authorized_keys
+		
+5. netcat:
+
+	na serwerze:
+		nc -lp 7000 > plik
+		
+	na kliencie:
+		nc -w1 192.168.0.1 7000 < plik
+	
+6. maski:
+	
+	/8 = 255.0.0.0
+	/16 = 255.255.0.0
+	/24 = 255.255.255.0
+
+7. adresy IP zarezerwowane dla sieci prywatnych:
+
+	Adres sieci | maska | dostępne adresy
+	10.0.0.0      /8      10.0.0.1- 10.255.255.254
+	172.16.0.0    /12     172.16.0.1-172.31.255.254
+	192.168.0.0   /16     192.168.0.1-192.168.255.254
+
+8. użytkownicy:
+
+	plik z kontami: /etc/passwd
+		root:x:0:0:root:/root:/bin/bash
+		Kuc:x:1001:101:mr August:/home/Kuc:/bin/sh
+		
+	plik z hasłami: /etc/shadow
+
+	useradd [nazwa] -d [kalog_domowy] -m -g [GID] -u [UID]
+	-c ["pełna nazwa"] -s [shell] -G [grupy dodatkowe]
+	np.
+		useradd Kuc -d /home/Kuc -m -g 101 -u 1001 -c "mr August"
+		-s /bin/sh -G users
+		
+	userdel -r [nazwa]      -usuwa użytkownika i wszystkie jego pliki 
+	passwd [nazwa]					oraz procesy(-r)
+	passwd -e [nazwa]       -wymusza zmine hasła przy logowaniu
+	
+	su [użytkownik]          -logowanie do konta z roota
+	sudo [polecenie]         -wykonywanie poleceń z uprawnieniami roota
+					(konfiguracja w /etc/sudoers)
+	id
+	gruops       -dane o użytkowniku
+	
+9. grupy:
+
+	plik z grupami: /etc/group
+		users:x:100:jan,ola,Kuc
+		nauczyciele:x:101:youngZnkr
+		
+	groupadd [nazwa]
+	
+10. uprawnienia:
+
+	ls -las [śceiżka np. /dane/plik.txt]     -wyświetlanie info o pliku
+	
+	chgrp -R /dane/plik.txt                  '-R' dla folderu i podfol
+	chown [nazwa_użytkownika] [ścieżka]
+	chmod [uprawinienia np. 754] [ścieżka]
+	
+	uprawinienia:
+		właściciela | grupy | pozostałych
+		  rwx          rwx         rwx
+	
+		r - read (4)
+		w - write (2)
+		x - execute (1)
+		
+		np. rwx r-x r--    =   754
+
+11. Frewall (extended):
+
+	#!/bin/bash
+	iptables -P INPUT DROP
+	iptables -P OUTPUT DROP
+	iptables -I INPUT -i lo -j ACCEPT
+	iptables -I OUTPUT -o lo -j ACCEPT
+	iptables -I INPUT -i eth1 -p icmp -s 192.168.0.0/24 -j ACCEPT
+	iptables -I INPUT -i eth1 -p tcp --dport 22 -s 192.168.0.0/24 -j ACCEPT
+	iptables -I INPUT -i eth1 -p tcp --dport 7000 -s 192.168.0.0/24 -j ACCEPT
+	iptables -I OUTPUT -o eth1 -m state --state ESTABILISHED,RELATED
+	
+12. Sprawdzaanie trasy w sieci (drogi z jednej karty do drugiej):
+
+	traceroute [adres_ip]
+	
+13. logowanie się na konto na innym pc przez ssh:
+
+	ssh -l [nazwa konta] [adres IP]
+	np. 
+	  ssh -l root 192.168.0.1
+	
+14. Montowanie przy starcie:
+
+	vim /etc/fstab
+	
+	dodajemy linijkę: /dev/sda1 /part1 ext2 default 0 0
+
+15. Testowanie połączenia jednym pakietem i zapis do pliku wraz z datą(skrypt):
+
+	#!/bin/bash
+	date > plik.txt
+	ping 192.168.0.1 -c 1 >> plik.txt
+
+16. Tworzenie struktur katalogów:
+
+	mkdir -p dane_firmy/{magazyn/dokumenty/{przyjecia,temp,zwroty},public}
+
+	dane_firmy
+	├ magazyn
+	| ├ dokumenty
+	| | ├ przyjęcia
+	| | ├ temp
+	| | ├ zwroty
+	├ public
+
+17. archiwum z datą i godziną w nazwie:
+
+     tar -opcje_pakujące nazwapliku_$(date '+%d-%m-%y|%H:%M:%S').tar.gz katalog/
+	

@@ -1,0 +1,24 @@
+I.	Procedura dostępu do przełącznika:
+	1. odczytać na spodzie urządzenia jego adres IP
+	2. podłączyć przełącznik kablem do komputera
+	3. ustawic adresację komputera tak, aby znajdował sie w tej samej sieci co przełącznik
+	4. wpisac ades przełacznika w przeglądarkę lub użyć odpowiedniego programu do konfiguracji
+	5. zalogować się (najczęściej login: admin, hasło: admin)
+
+II.	Procedura dostępu do routera:
+	1. podłączyc router do komputera
+	2. w ustawieniach sieci zmienieć adresy na przydzielane automatycznie
+	3. sprawdzić jaką bramę otrzymał komputer (jest to adres routera)
+	4. wpisać adres routera w przgladarkę
+	5. zalogować się (najczęściej login: admin, hasło: admin)
+
+III. Adresowanie kontrolera domeny:
+	1. trzeba ustawić statyczne IP
+	2. DNS taki sam jak adres IP
+
+IV.	Adresowanie stacji w AD:
+	1. DNS wskazuje na kontroler domeny
+
+V.	Konfiguracja AD:
+
+VI.	Wirtualne hosty w IIS

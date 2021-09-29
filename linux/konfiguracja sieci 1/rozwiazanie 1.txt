@@ -1,0 +1,101 @@
+KONFIGURACJA MASZYN:
+K1:	Karta 1:	podłączona do:sieć wewnętrzna, nazwa: vmnet5, tryb nasłuchiwania: pozwalaj wszystkim, wylosuj nowy MAC
+K2: 	Karta 1:	podłączona do:sieć wewnętrzna, nazwa: vmnet6, tryb nasłuchiwania: pozwalaj wszystkim, wylosuj nowy MAC
+R1: 	Karta 1:	podłączona do:sieć wewnętrzna, nazwa: vmnet7, tryb nasłuchiwania: pozwalaj wszystkim, wylosuj nowy MAC
+	Karta 2:	podłączona do:sieć wewnętrzna, nazwa: intnet
+	Karta 3:	podłączona do:sieć wewnętrzna, nazwa: intnet
+pozosta³e:	podłączona do:sieć wewnętrzna, nazwa: intnet
+
+
+
+KOMENDY:
+
+K1:
+	ip link set dev eth0 up
+	ip address add 10.0.0.2/16 dev eth0
+	ip route add 0/0 via 10.0.0.1
+
+K2:
+	ip l s dev eth0 up
+	ip a a 10.0.0.3/16 dev eth0
+	ip r a 0/0 via 10.0.0.1
+
+BRIDGE:
+	brctl addbr sw
+	brctl addif sw eth0
+	brctl addif sw eth1
+	brctl addif sw eth2
+	ip l s dev eth0 up
+	ip l s dev eth1 up
+	ip l s dev eth2 up
+	ip l s dev sw up
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+
+R1:
+	ip l s dev eth0 up
+	ip l s dev eth1 up
+	ip l s dev eth2 up
+	ip a a 10.0.0.1/16 dev eth0
+	ip a a 10.1.0.1/16 dev eth1
+	ip a a 10.3.0.1/16 dev eth2
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	ip r a 10.2.0.0/16 via 10.1.0.2
+	ip r a 0/0 via 10.3.0.2
+
+R2:
+	ip l s dev eth0 up
+	ip l s dev eth1 up
+	ip a a 10.1.0.2/16 dev eth0
+	ip a a 10.2.0.1/16 dev eth1
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	ip r a 0/0 via 10.1.0.1
+
+K3:
+	ip l s dev eth0 up
+	ip a a 10.2.0.2/16 dev eth0
+	ip r a 0/0 via 10.2.0.1
+
+R3:
+	ip l s dev eth0 up
+	ip l s dev eth1 up
+	ip a a 10.3.0.2/16 dev eth0
+	ip a a 80.1.1.1/8 dev eth1
+	ip r a 120.0.0.0/8 via 80.1.1.2
+	ip r a 0/0 via 10.3.0.1
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	iptables -t nat -I POSTROUTING -o eth1 -s 10.0.0.0/8 -j MASQUERADE 
+	
+	iptables -t nat -A PREROUTING -i eth1 -p tcp -s 120.1.1.1 -d 80.1.1.1 --dport 8080 -j DNAT --to 10.2.0.2:80
+
+R4: 
+	ip l s dev eth0 up
+	ip l s dev eth1 up
+	ip a a 80.1.1.2/8 dev eth0
+	ip a a 120.1.1.2/8 dev eth1
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	ip r a 0/0 via 80.1.1.1		
+
+SERWER:
+	ip l s dev eth0 up
+	ip a a 120.1.1.1/8 dev eth0
+	ip r a 0/0 via 120.1.1.2
+	httpd
+	iptables -F
+	iptables -P INPUT DROP
+	iptables -P OUTPUT DROP
+	iptables -I INPUT -p icmp -i eth0 -j ACCEPT
+	iptables -I INPUT -p tcp -i eth0 --dport 80 -j ACCEPT
+	iptables -I OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j ACCEPT
+	iptables -I OUTPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+
+Dodatek: 
+	ip r del 0/0	//usuniecie default route
+	tcpdump - i naramowice		//do switch, podglad ramek
+	brctl show macs naramowice	//do switch, podglad tablicy MAC
+	echo "nameserver 8.8.8.8" > /etc/resolv.conf	//do PC, ustawienie DNS
+	ip -s -s neigh flush all	//czyszczenie tablicy arp
+	nmap -p 80 120.1.1.1	//K1 do SerwerPubliczny, sprawdzanie danego portu(80) z innej maszyny(adres: 120.1.1.1)
+	iptables -L	//przeglad zezwolen w iptables
+	iptables -t nat -L	//przeglad zezwolen w iptables dla NAT
+	

@@ -1,0 +1,66 @@
+1.	ZARZĄDZANIE DYSKAMI:
+
+	diskpart:  [rozmiar podawany w MB]
+	
+		list disk/partition/volume/vdisk
+		detail
+		select
+		create partition primary/extended/logical/EFI/MSR size
+		create volume simple/stripe/mirror size=1000 disk1,2
+		extend size=1000 disk2
+		shrink desired=100      -zmniejszenei rozmiaru woluminu
+		break disk
+		active
+		clean
+		delete
+		format fs=ntfs label="nazwa" quick
+		assign letter
+	
+	convert N:/fs:ntfs			N-litera dysklu do konwersji z fat32 do ntfs
+	
+	chkdsk - informacje o dysku
+	
+2.	UŻYTKOWNICY:
+
+	net user nazwa_uzytkownika /add
+	net user nazwa_uzytkownika
+	net user nazwa_uzytkownika haslo
+	net user nazwa_uzytkownika /logonpasswordchg:yes
+	net user nazwa_uzytkownika /passwordchg:yes
+	net user nazwa_uzytkownika /times:wt-cz,09:00-15:00
+	net user nazwa_uzytkownika /expires:2017-09-08
+	net user nazwa_uzytkownika /full:"pełna nazwa"
+	
+3. GRUPY:
+
+	net localgroup nazwa_grupy /add
+	net localgroup nazwa_grupy nazwa_uzytkownika /add
+	
+4. PRZYSTAWKI:
+
+	mmc - microsoft menagment console
+	
+	lusrmgr.msc - przystawka z użytkownikami
+	secpol.msc - zasady zabezpieczeń lokalnych
+	gpedit.msc - edytor lokalnych zasad grupy
+
+5. PLIKI I FOLDERY:
+
+	mkdir = md    - tworzenie folderów
+	rmdir = rd    - usuwanie folderów
+	rename stara_nazwa nowa_nazwa
+	move
+	copy folder1 folder2
+	
+	cipher folder /e  - szyfrowanie
+	
+	type nul>plik.txt    -tworzenie pustego pliku
+	echo tekst>plik.txt
+	fsutil file createnew E:\RAID5\dane.dat 3221225472    - plik o określonej wielkosci
+	
+6. WYŁACZENIE FIREWALLA:
+		
+		netsh firewall set opmode disable
+		
+	
+ 	

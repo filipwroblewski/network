@@ -1,0 +1,222 @@
+1.	KONFIGURACJA SIECI:
+	
+	A)	ifconfig  eth0 192.168.0.1 netmask 255.255.255.0 up
+		ip route add 0/0 via 192.168.0.2
+		route -n
+	
+		na Rescue:
+			/etc/init.d/NetworkManager stop
+		
+	B)	ustawienie NAT-a:
+			iptables -t nat -A POSTROUTING -o eth2 MASQUERADE
+	
+	C)	wyłączenie firewalla (LINUX):
+
+		vim /firewall
+		
+			#!/bin/bash
+			iptables -F
+			iptables -P INPUT ACCEPT
+			iptables -P OUTPUT ACCEPT
+			iptables -P FORWARD ACCEPT
+		
+		chmod +x /firewall
+		/firewall
+	
+		iptables -L
+		
+		wyłączenie firewalla(WINDOWS):
+		
+			netsh firewall set opmode disable
+		
+	D)	Sprawdzaanie trasy w sieci (drogi z jednej karty do drugiej):
+
+		traceroute [adres_ip]
+		ntr [adres_ip]
+		
+	E)	Testowanie połączenia jednym pakietem i zapis do pliku wraz z datą(skrypt):
+
+			#!/bin/bash
+			date > plik.txt
+			ping 192.168.0.1 -c 1 >> plik.txt
+
+2. UŻYTKOWNICY I GRUPY:
+	
+	A)	plik z kontami: /etc/passwd
+		root:x:0:0:root:/root:/bin/bash
+		Kuc:x:1001:101:mr August:/home/Kuc:/bin/sh
+		
+		plik z hasłami: /etc/shadow
+
+		useradd [nazwa] -d [kalog_domowy] -m -g [GID] -u [UID]
+		-c ["pełna nazwa"] -s [shell] -G [grupy dodatkowe]
+		np.
+			useradd Kuc -d /home/Kuc -m -g 101 -u 1001 -c "mr August"
+			-s /bin/sh -G users
+		
+		userdel -r [nazwa]      -usuwa użytkownika i wszystkie jego pliki 
+		passwd [nazwa]									oraz procesy(-r)
+		passwd -e [nazwa]       -wymusza zmine hasła przy logowaniu
+	
+		su [użytkownik]          -logowanie do konta z roota
+		sudo [polecenie]         -wykonywanie poleceń z uprawnieniami roota
+								(konfiguracja w /etc/sudoers)
+		id
+		gruops       -dane o użytkowniku
+		
+	C)	plik z grupami: /etc/group
+			users:x:100:jan,ola,Kuc
+			nauczyciele:x:101:youngZnkr
+		
+		groupadd [nazwa]
+		
+	D) uprawnienia:
+
+		ls -las [śceiżka np. /dane/plik.txt]     -wyświetlanie info o pliku
+	
+		chgrp -R /dane/plik.txt                  '-R' dla folderu i podfol
+		chown [nazwa_użytkownika] [ścieżka]
+		chmod [uprawinienia np. 754] [ścieżka]
+		
+		uprawinienia:
+			właściciela | grupy | pozostałych
+			  rwx          rwx         rwx
+		
+			r - read (4)
+			w - write (2)
+			x - execute (1)
+			
+			np. rwx r-x r--    =   754
+			
+3.	LOGOWANIE I PRZESYŁANIE PRZEZ SIEĆ:
+
+	A)	logowanie się na konto na innym pc przez ssh:
+
+			ssh -l [nazwa konta] [adres IP]
+			np. 
+			  ssh -l root 192.168.0.1
+			  
+	B)	logowanie kluczami:
+	
+			na pierwszej maszynie (lin1):
+				
+				cd
+				ssh-keygen -t dsa
+				cd .ssh
+				ls
+				scp -p id_dsa.pub root@192.168.0.1:
+				
+			na drugiej maszynie (sles):
+			
+				cd
+				mkdir .ssh
+				cat id_dsa.pub >> .ssh/authorized_keys
+				
+	C)	netcat:
+
+			na serwerze:
+				nc -lp 7000 > plik
+				
+			na kliencie:
+				nc -w1 192.168.0.1 7000 < plik
+				
+	D)	SCP:
+	
+			scp -p /etc.tgz root@192.168.0.1:/backup
+			
+4.	ARCHIWIZACJA:
+
+	A)	tar -czvf /etc.tgz /etc
+		tar -cvf /bin.tar /bin
+		
+	B)	archiwum z datą i godziną w nazwie:
+
+			tar -opcje_pakujące nazwapliku_$(date '+%d-%m-%y|%H:%M:%S').tar.gz katalog/
+			
+5.	TWORZENIE STRUKTUR KATALOGÓW:
+
+		mkdir -p dane_firmy/{magazyn/dokumenty/{przyjecia,temp,zwroty},public}
+
+		dane_firmy
+		├ magazyn
+		| ├ dokumenty
+		| | ├ przyjęcia
+		| | ├ temp
+		| | ├ zwroty
+		├ public
+		
+6.	MONTOWANIE PRZY STARCIE:
+
+		vim /etc/fstab
+		
+		dodajemy linijkę: /dev/sda1 /part1 ext2 default 0 0
+		
+7. DYSKI, PARTYCJE, RAIDY:
+	
+	A)	Tworzenie partycji:
+		
+			fdisk -l
+			fdisk /dev/sda
+	
+	B)	RAID:
+	
+		Tworzenie: mdadm --create /dev/md0 --level=0 -n 2 /dev/sda1 /dev/sdb1
+		Oznaczanie partycji jako uszkodzona:  mdadm --manage /dev/md0 --fail /dev/sdb1
+		Dodawanie partycji do raidu: mdadm --manage /dev/md0 --add /dev/sdc1
+		Sprawdzanie stanu raid'u: cat /proc/mdstat
+		
+	C)	Towrzenie pliku:
+		LINUX: dd if=/dev/zero of=/raid5a/dane.dat bs=1M count=3000
+		WINDOWS: fsutil file createnew E:\RAID5\dane.dat 3221225472
+	
+	D)	info o dysku i partycjach:
+		
+			cat /proc/mdstat
+			mount
+			df -h
+			fdisk -l
+	E)	montowanie, formatowanie:
+		
+			mkdir /raid5a
+			mkfs.ext4 /dev/md0
+			mount /dev/md0 /raid5a
+			
+8.	DIAGNOSTYKA:
+
+	man dmidecode - dokumentacja dmidecode
+
+	A) Dyski:
+	
+		hdparm -I /dev/sda
+		hdparm -Tt /dev/sda
+		smartctl -a /dev/sda
+		whdd
+		fdisk -l
+		
+	B) CPU:
+	
+		cat /proc/cpuinfo
+		dmidecode -t 4
+		
+	C) BIOS:
+		
+		dmidecode -t 0, 13
+		
+	D) RAM:
+	
+		dmidecode -t 5,6,16,17
+		cat /proc/meminfo
+		
+	E) MB:
+	
+		dmidecode -t 2,10,41
+		
+	F) OS:
+		
+		dmidecode -t 1,12,15,23,32
+		cat /proc/version
+		cat /proc/sys/kernel/version
+		
+	G) cache:
+	
+		dmidecode -t 7

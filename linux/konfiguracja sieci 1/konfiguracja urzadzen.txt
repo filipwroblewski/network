@@ -1,0 +1,29 @@
+﻿1. Wyświetlanie informacji o kofiguracji sieci:
+	ip link
+	ip address show
+	ip route show
+	cat /rtc/resolv.conf
+	dhcpcd -d
+
+2. Bridge/switch:
+	brctl show
+	brctl addbr nazwa_switcha
+	brctl addif nazwa_switcha nazwa_karty
+	brctl showmax nazwa_switcha
+	
+3. Router:
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	ip route add adres_sieci/maska via gateway
+	
+4. konfiguracja sieci:
+	ip link set dev nazwa_karty up
+	ip address add adres_ip/maska dev nazwa_karty
+	echo "nameserver 8.8.8.8" > /etc/resolv.conf
+	
+5. Switch warstwy 3.:
+	ip address add ip/maska dev nazwa_switcha
+	
+6. inne:
+	tcpdump -i nazwa_switcha
+	macof -i nazwa_karty
+	

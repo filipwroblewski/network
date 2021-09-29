@@ -1,0 +1,14 @@
+Założenia:
+- wszystkie maszyny wirtualne – Virtual box, uruchamiane z bt2final.iso,
+- karty sieciowe – należą do sieci Internal – każda do vm-netu o nazwie jak na schemacie,
+Polecenie: wykonaj konfigurację sieci tak aby:
+1) był skonfigurowany BRIDGE sieciowy warstwy 2 oparty o Linuksa między K1, K2 i odpowiednim interfejsem R1,
+2) zaadresuj prawidłowo i zgodnie z zasadami adresowanie IP sieci, na schemacie hosty, korzystając z adresów 
+prywatnych LAN,
+3) skonfiguruj każdego hosta i router aby zapewnid ich komunikację,
+4) w sieci WAN użyj adresów ze schematu,
+5) router R4 nie ma mied ustawionych tras do żadnej sieci w segmencie LAN,
+6) na routerze R3 ma byd dodatkowo skonfigurowana usługa NAT (snat) zapewniająca możliwośd komunikacji z 
+hostów z LAN do serwera publicznego,
+7) na serwerze publicznym firewall ma blokowad dostęp do każdej usługi poza usługą http oraz ruchem ICMP,
+8) na serwerze uruchom usługę httpd.
